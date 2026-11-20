@@ -144,9 +144,10 @@ def create_category(createcategory: schemas.CreateCategory, db: Session = Depend
 
 @router.post("/createitem", response_model=APIResponse[schemas.ItemResponse], status_code= status.HTTP_201_CREATED)
 def create_item(createitem: schemas.CreateItem, db : Session = Depends(get_db), current_user : int = Depends(roleChecker)):
-    item_query = db.query(models.MenuItem).filter(createitem.item_name == models.MenuItem.item_name).first()
-    if item_query.item_name == createitem.item_name and item_query.item_size == createitem.item_size:
-        return error_response(code=status.HTTP_400_BAD_REQUEST, message="already having same name item with same type")
+    existing_item = db.query(models.MenuItem).filter(models.MenuItem.item_name == createitem.item_name, models.MenuItem.item_size == createitem.item_size
+    ).first()
+    if existing_item:
+        return error_response(code=status.HTTP_400_BAD_REQUEST, message="Already having same name item with same size")
     item_data = createitem.model_dump()
     item = models.MenuItem(**item_data)
     db.add(item)
